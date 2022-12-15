@@ -1,10 +1,10 @@
 {
-  "name": "@react-native-voice/voice",
-  "description": "React Native Native Voice library for iOS and Android",
-  "version": "3.2.4",
+  "name": "@voiceadventures/react-native-voice",
+  "description": "Fork of React Native Native Voice library for iOS and Android",
+  "version": "3.3.0",
   "author": "Sam Wenke <samwenke@gmail.com>",
   "private": false,
-  "homepage": "https://github.com/react-native-voice/voice",
+  "homepage": "https://github.com/AlexLerman/voice",
   "devDependencies": {
     "@react-native-community/eslint-config": "^0.0.7",
     "@semantic-release/git": "^9.0.0",
@@ -33,7 +33,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/react-native-voice/voice.git"
+    "url": "git://github.com/AlexLerman/voice.git"
   },
   "scripts": {
     "lint": "eslint src/*",
@@ -51,5 +51,11 @@
   "dependencies": {
     "invariant": "^2.2.4",
     "@expo/config-plugins": "^2.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/AlexLerman/voice/issues"
+  },
+  "directories": {
+    "example": "example"
   }
 }

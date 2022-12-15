@@ -11,6 +11,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognitionService;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.media.AudioManager;
 import androidx.annotation.NonNull;
 import android.util.Log;
 
@@ -40,6 +41,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   private SpeechRecognizer speech = null;
   private boolean isRecognizing = false;
   private String locale = null;
+  private AudioManager audioManager;
 
   public VoiceModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -122,6 +124,12 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       }
     }
 
+    audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+
+    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+    audioManager.startBluetoothSco();
+    audioManager.setBluetoothScoOn(true);
+
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, getLocale(this.locale));
     speech.startListening(intent);
   }
@@ -181,6 +189,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       public void run() {
         try {
           if (speech != null) {
+            audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+            audioManager.setMode(AudioManager.MODE_NORMAL);
+            audioManager.stopBluetoothSco();
+            audioManager.setBluetoothScoOn(false);
             speech.stopListening();
           }
           isRecognizing = false;
@@ -200,6 +212,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       public void run() {
         try {
           if (speech != null) {
+            audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+            audioManager.setMode(AudioManager.MODE_NORMAL);
+            audioManager.stopBluetoothSco();
+            audioManager.setBluetoothScoOn(false);
             speech.cancel();
           }
           isRecognizing = false;
@@ -219,6 +235,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       public void run() {
         try {
           if (speech != null) {
+            audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+            audioManager.setMode(AudioManager.MODE_NORMAL);
+            audioManager.stopBluetoothSco();
+            audioManager.setBluetoothScoOn(false);
             speech.destroy();
           }
           speech = null;
