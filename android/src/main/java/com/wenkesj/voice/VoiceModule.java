@@ -12,6 +12,8 @@ import android.speech.RecognitionService;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.media.AudioManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothHeadset;
 import androidx.annotation.NonNull;
 import android.util.Log;
 
@@ -124,11 +126,15 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       }
     }
 
-    audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+    Log.d("BT Connected", "Checking if connected");
 
-    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-    audioManager.startBluetoothSco();
-    audioManager.setBluetoothScoOn(true);
+    if(isBluetoothHeadsetConnected()) {
+      Log.d("BT Connected", "setting mode to in-communication");
+      audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+      audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+      audioManager.startBluetoothSco();
+      audioManager.setBluetoothScoOn(true);
+    }
 
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, getLocale(this.locale));
     speech.startListening(intent);
@@ -191,8 +197,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
           if (speech != null) {
             audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
             audioManager.setMode(AudioManager.MODE_NORMAL);
-            audioManager.stopBluetoothSco();
-            audioManager.setBluetoothScoOn(false);
+            if(isBluetoothHeadsetConnected()) {
+              audioManager.stopBluetoothSco();
+              audioManager.setBluetoothScoOn(false);
+            }
             speech.stopListening();
           }
           isRecognizing = false;
@@ -214,8 +222,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
           if (speech != null) {
             audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
             audioManager.setMode(AudioManager.MODE_NORMAL);
-            audioManager.stopBluetoothSco();
-            audioManager.setBluetoothScoOn(false);
+            if(isBluetoothHeadsetConnected()) {
+              audioManager.stopBluetoothSco();
+              audioManager.setBluetoothScoOn(false);
+            }
             speech.cancel();
           }
           isRecognizing = false;
@@ -237,8 +247,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
           if (speech != null) {
             audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
             audioManager.setMode(AudioManager.MODE_NORMAL);
-            audioManager.stopBluetoothSco();
-            audioManager.setBluetoothScoOn(false);
+            if(isBluetoothHeadsetConnected()) {
+              audioManager.stopBluetoothSco();
+              audioManager.setBluetoothScoOn(false);
+            }
             speech.destroy();
           }
           speech = null;
@@ -279,6 +291,12 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
     promise.resolve(serviceNames);
   }
+
+  public static boolean isBluetoothHeadsetConnected() {
+    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    return mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
+            && mBluetoothAdapter.getProfileConnectionState(BluetoothHeadset.HEADSET) == BluetoothHeadset.STATE_CONNECTED;
+  } 
 
   private boolean isPermissionGranted() {
     String permission = Manifest.permission.RECORD_AUDIO;
