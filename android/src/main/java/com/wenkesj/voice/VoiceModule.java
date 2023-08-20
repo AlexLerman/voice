@@ -5,6 +5,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.media.AudioDeviceInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.RecognitionListener;
@@ -131,10 +133,35 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
     if(isBluetoothHeadsetConnected()) {
       Log.d("BT Connected", "setting mode to in-communication");
       audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-      audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-      audioManager.startBluetoothSco();
-      audioManager.setBluetoothScoOn(true);
+      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        AudioDeviceInfo btDevice = audioManager.getCommunicationDevice();
+        if(btDevice == null || btDevice.getType() != AudioDeviceInfo.TYPE_BLUETOOTH_SCO){
+          audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+          Log.d("BT CAudioDeviceInfoonnected", "USING NEW API");
+          List<AudioDeviceInfo> devices = null;
+          devices = audioManager.getAvailableCommunicationDevices();
+          for (AudioDeviceInfo device : devices) {
+            if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
+              btDevice = device;
+              break;
+            }
+          }
+          if (btDevice != null) {
+            // Turn speakerphone ON.
+            boolean result = audioManager.setCommunicationDevice(btDevice);
+            if (!result) {
+              // Handle error.
+            }
+            // Turn speakerphone OFF.
+          }
+        } else {
+          audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+          audioManager.startBluetoothSco();
+        }
+        audioManager.setBluetoothScoOn(true);
+      }
     }
+
 
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, getLocale(this.locale));
     speech.startListening(intent);
@@ -196,11 +223,15 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         try {
           if (speech != null) {
             audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-            audioManager.setMode(AudioManager.MODE_NORMAL);
-            if(isBluetoothHeadsetConnected()) {
-              audioManager.stopBluetoothSco();
-              audioManager.setBluetoothScoOn(false);
-            }
+//            audioManager.setMode(AudioManager.MODE_NORMAL);
+//            if(isBluetoothHeadsetConnected()) {
+//              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//                audioManager.clearCommunicationDevice();
+//              } else {
+//                audioManager.stopBluetoothSco();
+//              }
+//              audioManager.setBluetoothScoOn(false);
+//            }
             speech.stopListening();
           }
           isRecognizing = false;
