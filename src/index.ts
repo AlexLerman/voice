@@ -34,6 +34,8 @@ class RCTVoice {
       onSpeechResults: () => {},
       onSpeechPartialResults: () => {},
       onSpeechVolumeChanged: () => {},
+      onSpeechSegmentResults: () => {},
+      onEndOfSegmentedSession: () => {},
     };
   }
 
@@ -45,6 +47,8 @@ class RCTVoice {
     Voice.onSpeechResults = undefined;
     Voice.onSpeechPartialResults = undefined;
     Voice.onSpeechVolumeChanged = undefined;
+    Voice.onEndOfSegmentedSession = undefined;
+    Voice.onSpeechSegmentResults = undefined;
   }
 
   destroy() {
@@ -89,6 +93,7 @@ class RCTVoice {
               EXTRA_LANGUAGE_MODEL: 'LANGUAGE_MODEL_FREE_FORM',
               EXTRA_MAX_RESULTS: 5,
               EXTRA_PARTIAL_RESULTS: true,
+              EXTRA_SEGMENTED_SESSION: true,
               REQUEST_PERMISSIONS_AUTO: true,
             },
             options,
@@ -171,6 +176,9 @@ class RCTVoice {
   set onSpeechEnd(fn: (e: SpeechEndEvent) => void) {
     this._events.onSpeechEnd = fn;
   }
+  set onEndOfSegmentedSession(fn: (e: SpeechEndEvent) => void) {
+    this._events.onEndOfSegmentedSession = fn;
+  }
   set onSpeechError(fn: (e: SpeechErrorEvent) => void) {
     this._events.onSpeechError = fn;
   }
@@ -179,6 +187,9 @@ class RCTVoice {
   }
   set onSpeechPartialResults(fn: (e: SpeechResultsEvent) => void) {
     this._events.onSpeechPartialResults = fn;
+  }
+  set onSpeechSegementResults(fn: (e: SpeechResultsEvent) => void) {
+    this._events.onSpeechSegmentResults = fn;
   }
   set onSpeechVolumeChanged(fn: (e: SpeechVolumeChangeEvent) => void) {
     this._events.onSpeechVolumeChanged = fn;

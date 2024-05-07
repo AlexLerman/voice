@@ -24,6 +24,8 @@ export type SpeechEvents = {
   onSpeechError?: (e: SpeechErrorEvent) => void;
   onSpeechResults?: (e: SpeechResultsEvent) => void;
   onSpeechPartialResults?: (e: SpeechResultsEvent) => void;
+  onSpeechSegmentResults?: (e: SpeechResultsEvent) => void;
+  onEndOfSegmentedSession?: (e: SpeechEndEvent) => void;
   onSpeechVolumeChanged?: (e: SpeechVolumeChangeEvent) => void;
 };
 
