@@ -82,6 +82,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         speech.setRecognitionListener(this);
 
         final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_SEGMENTED_SESSION, RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS);
 
         // Load the intent with options from JS
         ReadableMapKeySetIterator iterator = opts.keySetIterator();
@@ -110,10 +111,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                     intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, opts.getBoolean(key));
                     break;
                 }
-                case "EXTRA_SEGMENTED_SESSION": {
-                  intent.putExtra(RecognizerIntent.EXTRA_SEGMENTED_SESSION, opts.getBoolean(key));
-                  break;
-              }
                 case "EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS": {
                     Double extras = opts.getDouble(key);
                     intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, extras.intValue());
