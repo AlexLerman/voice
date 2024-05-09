@@ -1,8 +1,8 @@
 {
   "name": "@voiceadventures/react-native-voice",
   "description": "Fork of React Native Native Voice library for iOS and Android",
-  "version": "3.3.1",
-  "author": "Sam Wenke <samwenke@gmail.com>",
+  "version": "3.4.0",
+  "author": "Alex Lerman",
   "private": false,
   "homepage": "https://github.com/AlexLerman/voice",
   "devDependencies": {

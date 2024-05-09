@@ -82,7 +82,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         speech.setRecognitionListener(this);
 
         final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_SEGMENTED_SESSION, RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS);
 
         // Load the intent with options from JS
         ReadableMapKeySetIterator iterator = opts.keySetIterator();
@@ -124,6 +123,14 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                 case "EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS": {
                     Double extras = opts.getDouble(key);
                     intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, extras.intValue());
+                    break;
+                }
+                case "EXTRA_SEGMENTED_SESSION" : {
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.putExtra(RecognizerIntent.EXTRA_SEGMENTED_SESSION, RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS);
+                    } else {
+                        Log.e("API Version", "API version too low. Does not support segmented sessions");
+                    }
                     break;
                 }
             }
