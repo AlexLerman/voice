@@ -187,7 +187,7 @@ class RCTVoice {
   set onSpeechPartialResults(fn: (e: SpeechResultsEvent) => void) {
     this._events.onSpeechPartialResults = fn;
   }
-  set onSpeechSegementResults(fn: (e: SpeechResultsEvent) => void) {
+  set onSpeechSegmentResults(fn: (e: SpeechResultsEvent) => void) {
     this._events.onSpeechSegmentResults = fn;
   }
   set onSpeechVolumeChanged(fn: (e: SpeechVolumeChangeEvent) => void) {
