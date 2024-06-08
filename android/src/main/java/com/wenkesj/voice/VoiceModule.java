@@ -54,9 +54,48 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         super(reactContext);
         this.reactContext = reactContext;
         connectBT(reactContext);
+        getAudioFocus(reactContext);
     }
 
+    private void getAudioFocus(reactContext) {
+        private void onAudioFocusChange(int focusChange) {
+            Log.d("AUDIOFOCUS", "NEW FOCUS Change");
+            if (!this.mixWithOthers) {
+                Log.d("AUDIOFOCUS", "DON'T MIX");
+//      MediaPlayer player = this.playerPool.get(this.focusedPlayerKey);
+                switch (focusChange) {
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                    case AudioManager.AUDIOFOCUS_LOSS:
+                        WritableMap error = Arguments.createMap();
+                        error.putString("message", "AUDIOFOCUS_LOSS");
+                        error.putString("code", String.valueOf(-1));
+                        WritableMap event = Arguments.createMap();
+                        event.putMap("error", error);
+                        sendEvent("onSpeechError", event);
+                        break;
+                    case AudioManager.AUDIOFOCUS_GAIN:
+                        WritableMap error = Arguments.createMap();
+                        error.putString("message", "AUDIOFOCUS_GAIN");
+                        error.putString("code", String.valueOf(1));
+                        WritableMap event = Arguments.createMap();
+                        event.putMap("error", error);
+                        sendEvent("onSpeechError", event);                        break;
+                    default:
+                        Log.d("AUDIOFOCUS", "Something else:");
+                }
+            }
+        }
 
+        audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            AudioFocusRequest newRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setOnAudioFocusChangeListener(onAudioFocusChange)
+                    .build();
+            Log.d("AUDIOFOCUS", "SPEECH requesting AUDIO FOCUS");
+            int result = audioManager.requestAudioFocus(newRequest);
+        }
+    }
 
     private void connectBT(ReactApplicationContext reactContext) {
         Log.d("BTLE", "Connecting when module loaded");
