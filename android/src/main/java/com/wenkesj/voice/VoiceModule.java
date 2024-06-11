@@ -9,6 +9,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
+import android.media.AudioFocusRequest;
+import android.media.session.MediaController;
+import android.media.session.MediaSessionManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,58 +57,17 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         super(reactContext);
         this.reactContext = reactContext;
         connectBT(reactContext);
-        getAudioFocus(reactContext);
     }
 
-    private void getAudioFocus(reactContext) {
-        private void onAudioFocusChange(int focusChange) {
-            Log.d("AUDIOFOCUS", "NEW FOCUS Change");
-            if (!this.mixWithOthers) {
-                Log.d("AUDIOFOCUS", "DON'T MIX");
-//      MediaPlayer player = this.playerPool.get(this.focusedPlayerKey);
-                switch (focusChange) {
-                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    case AudioManager.AUDIOFOCUS_LOSS:
-                        WritableMap error = Arguments.createMap();
-                        error.putString("message", "AUDIOFOCUS_LOSS");
-                        error.putString("code", String.valueOf(-1));
-                        WritableMap event = Arguments.createMap();
-                        event.putMap("error", error);
-                        sendEvent("onSpeechError", event);
-                        break;
-                    case AudioManager.AUDIOFOCUS_GAIN:
-                        WritableMap error = Arguments.createMap();
-                        error.putString("message", "AUDIOFOCUS_GAIN");
-                        error.putString("code", String.valueOf(1));
-                        WritableMap event = Arguments.createMap();
-                        event.putMap("error", error);
-                        sendEvent("onSpeechError", event);                        break;
-                    default:
-                        Log.d("AUDIOFOCUS", "Something else:");
-                }
-            }
-        }
-
-        audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            AudioFocusRequest newRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setOnAudioFocusChangeListener(onAudioFocusChange)
-                    .build();
-            Log.d("AUDIOFOCUS", "SPEECH requesting AUDIO FOCUS");
-            int result = audioManager.requestAudioFocus(newRequest);
-        }
-    }
-
-    private void connectBT(ReactApplicationContext reactContext) {
-        Log.d("BTLE", "Connecting when module loaded");
+    private void findAndConnectBT(Boolean notify) {
+        Log.d("BTLE", "find and connect headset");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
             AudioDeviceInfo[] allDeviceInfo = audioManager.getDevices(GET_DEVICES_INPUTS);
             AudioDeviceInfo bleInputDevice = null;
             for (AudioDeviceInfo device : allDeviceInfo) {
-                if(device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
-                    Log.d("BTLE", "Connecting to A2DP headset");
+                if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
+                    Log.d("BTLE", "A2DP headset");
                     Log.d("BTLE", "Is an input? " + Boolean.toString(device.isSource()));
                     Log.d("BTLE", "Is an output? " + Boolean.toString(device.isSink()));
                 } else {
@@ -113,46 +75,37 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                     Log.d("BTLE", "Is an input? " + Boolean.toString(device.isSource()));
                     Log.d("BTLE", "Is an output? " + Boolean.toString(device.isSink()));
                 }
-                if (device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
+                Log.d("BTLE", "Might connect?? " + Boolean.toString(device.isSink()));
+                if (device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
                     bleInputDevice = device;
                     audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-                    if(device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) {
-                        Log.d("BTLE", "Connecting to BLE headset");
+                    if (device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) {
+                        audioManager.setCommunicationDevice(bleInputDevice);
+                        Log.d("BTLE", "Connecting to BLE headset from load");
                     } else {
-                        Log.d("BTLE", "Connecting to SCO");
+                        audioManager.startBluetoothSco();
+                        audioManager.setBluetoothScoOn(true);
+                        Log.d("BTLE", "Connecting to SCO from load");
                     }
                     Log.d("BTLE", "Setting communitcation device from module loading");
-                    audioManager.setCommunicationDevice(bleInputDevice);
+                    if (notify) btConnected(true);
                     break;
                 }
             }
+        }
+    }
+
+    private void connectBT(ReactApplicationContext reactContext) {
+        Log.d("BTLE", "Connecting when module loaded");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            findAndConnectBT(false);
 
             final AudioDeviceCallback audioDeviceCallback = new AudioDeviceCallback() {
                 @Override
                 public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
                     Log.d("BTLE", "Device added");
-                    audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-                    AudioDeviceInfo bleInputDevice = null;
-                    for (AudioDeviceInfo device : addedDevices) {
-                        if(device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
-                            Log.d("BTLE", "Connecting to A2DP headset");
-                            Log.d("BTLE", "Is an input? " + Boolean.toString(device.isSource()));
-                            Log.d("BTLE", "Is an output? " + Boolean.toString(device.isSink()));
-                        } else {
-                            Log.d("BTLE", Integer.toString(device.getType()));
-                            Log.d("BTLE", "Is an input? " + Boolean.toString(device.isSource()));
-                            Log.d("BTLE", "Is an output? " + Boolean.toString(device.isSink()));
-                        }
-                        if (device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
-                            bleInputDevice = device;
-                            Log.d("BTLE", "Setting communitcation device");
-                            audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-                            audioManager.setCommunicationDevice(bleInputDevice);
-                        }
-                    }
-                }
-
-                ;
+                    findAndConnectBT(true);
+                };
 
                 @Override
                 public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
@@ -163,7 +116,13 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                         if (device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
                             bleInputDevice = device;
                             audioManager.setMode(AudioManager.MODE_NORMAL);
-                            audioManager.clearCommunicationDevice();
+                            if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
+                                audioManager.stopBluetoothSco();
+                                audioManager.setBluetoothScoOn(false);
+                            } else {
+                                audioManager.clearCommunicationDevice();
+                            }
+                            btConnected(false);
                         }
                     }
                 };
@@ -173,9 +132,21 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         }
     }
 
-
-
-
+    private void btConnected(Boolean connected) {
+        WritableMap error = Arguments.createMap();
+        WritableMap event = Arguments.createMap();
+        if (connected){
+            error.putString("message", "CONNECTED");
+            error.putString("code", String.valueOf(1));
+            event.putMap("event", error);
+            sendEvent("BTCONNECT", event);
+        } else {
+            error.putString("message", "DISCONNECTED");
+            error.putString("code", String.valueOf(0));
+            event.putMap("event", error);
+            sendEvent("BTCONNECT", event);
+        }
+    }
 
     private String getLocale(String locale) {
         if (locale != null && !locale.equals("")) {
@@ -186,6 +157,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
     }
 
     private void startListening(ReadableMap opts) {
+//        findAndConnectBT(true);
         if (speech != null) {
             speech.destroy();
             speech = null;
@@ -260,42 +232,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                 }
             }
         }
-
-        Log.d("BT Connected", "Checking if connected");
-//
-//        if(isBluetoothHeadsetConnected()) {
-//            Log.d("BT Connected", "setting mode to in-communication");
-//            audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-//            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-//                AudioDeviceInfo btDevice = audioManager.getCommunicationDevice();
-//                if(btDevice == null || btDevice.getType() != AudioDeviceInfo.TYPE_BLUETOOTH_SCO){
-//                    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-//                    Log.d("BT CAudioDeviceInfoonnected", "USING NEW API");
-//                    List<AudioDeviceInfo> devices = null;
-//                    devices = audioManager.getAvailableCommunicationDevices();
-//                    for (AudioDeviceInfo device : devices) {
-//                        if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
-//                            btDevice = device;
-//                            break;
-//                        }
-//                    }
-//                    if (btDevice != null) {
-//                        // Turn speakerphone ON.
-//                        boolean result = audioManager.setCommunicationDevice(btDevice);
-//                        if (!result) {
-//                            // Handle error.
-//                        }
-//                        // Turn speakerphone OFF.
-//                    }
-//                } else {
-//                    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-//                    audioManager.startBluetoothSco();
-//                }
-//                audioManager.setBluetoothScoOn(true);
-//            }
-//        }
-
-
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, getLocale(this.locale));
         speech.startListening(intent);
     }
@@ -355,16 +291,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
             public void run() {
                 try {
                     if (speech != null) {
-//                        audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-//            audioManager.setMode(AudioManager.MODE_NORMAL);
-//            if(isBluetoothHeadsetConnected()) {
-//              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                audioManager.clearCommunicationDevice();
-//              } else {
-//                audioManager.stopBluetoothSco();
-//              }
-//              audioManager.setBluetoothScoOn(false);
-//            }
                         speech.stopListening();
                     }
                     isRecognizing = false;
@@ -384,12 +310,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
             public void run() {
                 try {
                     if (speech != null) {
-//                        audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-//                        audioManager.setMode(AudioManager.MODE_NORMAL);
-//                        if(isBluetoothHeadsetConnected()) {
-//                            audioManager.stopBluetoothSco();
-//                            audioManager.setBluetoothScoOn(false);
-//                        }
                         speech.cancel();
                     }
                     isRecognizing = false;
@@ -409,12 +329,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
             public void run() {
                 try {
                     if (speech != null) {
-//                        audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
-//                        audioManager.setMode(AudioManager.MODE_NORMAL);
-//                        if(isBluetoothHeadsetConnected()) {
-//                            audioManager.stopBluetoothSco();
-//                            audioManager.setBluetoothScoOn(false);
-//                        }
                         speech.destroy();
                     }
                     speech = null;
