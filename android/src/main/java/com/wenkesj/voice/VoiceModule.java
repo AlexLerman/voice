@@ -66,16 +66,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
             AudioDeviceInfo[] allDeviceInfo = audioManager.getDevices(GET_DEVICES_INPUTS);
             AudioDeviceInfo bleInputDevice = null;
             for (AudioDeviceInfo device : allDeviceInfo) {
-                if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
-                    Log.d("BTLE", "A2DP headset");
-                    Log.d("BTLE", "Is an input? " + Boolean.toString(device.isSource()));
-                    Log.d("BTLE", "Is an output? " + Boolean.toString(device.isSink()));
-                } else {
-                    Log.d("BTLE", Integer.toString(device.getType()));
-                    Log.d("BTLE", "Is an input? " + Boolean.toString(device.isSource()));
-                    Log.d("BTLE", "Is an output? " + Boolean.toString(device.isSink()));
-                }
-                Log.d("BTLE", "Might connect?? " + Boolean.toString(device.isSink()));
                 if (device.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
                     bleInputDevice = device;
                     audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
