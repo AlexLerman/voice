@@ -14,6 +14,7 @@ export type VoiceModule = {
   cancelSpeech: (callback: Callback) => void;
   isRecognizing: Function;
   isSpeechAvailable: Function;
+  isBluetoothInputConnected: Function;
 } & SpeechEvents &
   EventSubscriptionVendor;
 

@@ -59,6 +59,28 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         connectBT(reactContext);
     }
 
+    @ReactMethod
+    public void isBluetoothInputConnected(final Callback callback) {
+        final VoiceModule self = this;
+        Handler mainHandler = new Handler(this.reactContext.getMainLooper());
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("BTLE", "asking if bluetooth is connected");
+                try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
+                        AudioDeviceInfo device = audioManager.getCommunicationDevice();
+                        callback.invoke(device.isSource(), false);
+                    }
+                    callback.invoke(false, false);
+                } catch(Exception e) {
+                    callback.invoke(false, e.getMessage());
+                }
+            }
+        });
+    }
+
     private void findAndConnectBT(Boolean notify) {
         Log.d("BTLE", "find and connect headset");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

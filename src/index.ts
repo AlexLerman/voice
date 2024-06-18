@@ -144,6 +144,18 @@ class RCTVoice {
     });
   }
 
+  isBluetoothInputConnected(): Promise<0 | 1> {
+    return new Promise((resolve, reject) => {
+      Voice.isBluetoothInputConnected((isAvailable: 0 | 1, error: string) => {
+        if (error) {
+          reject(new Error(error));
+        } else {
+          resolve(isAvailable);
+        }
+      });
+    }); 
+  }
+
   /**
    * (Android) Get a list of the speech recognition engines available on the device
    * */
