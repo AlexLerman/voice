@@ -71,9 +71,11 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                         audioManager = (AudioManager) reactContext.getSystemService(reactContext.AUDIO_SERVICE);
                         AudioDeviceInfo device = audioManager.getCommunicationDevice();
-                        callback.invoke(device.isSource(), false);
+                        Boolean connected = device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || device.isSource();
+                        callback.invoke(connected, false);
+                    } else {
+                        callback.invoke(false, false);
                     }
-                    callback.invoke(false, false);
                 } catch(Exception e) {
                     callback.invoke(false, e.getMessage());
                 }
