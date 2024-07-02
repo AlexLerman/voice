@@ -173,8 +173,20 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
     private void startListening(ReadableMap opts) {
 //        findAndConnectBT(true);
         if (speech != null) {
-            speech.destroy();
-            speech = null;
+            try {
+                speech.destroy();
+                speech = null;
+            } catch (Exception e) {
+                Log.d("RECOGNIZE", e.getMessage());
+                String errorMessage = String.format("%d/%s", 25, e.getMessage());
+                WritableMap error = Arguments.createMap();
+                error.putString("message", errorMessage);
+                error.putString("code", String.valueOf(25));
+                WritableMap event = Arguments.createMap();
+                event.putMap("error", error);
+                sendEvent("onSpeechError", event);
+                return;
+            }
         }
 
         if(opts.hasKey("RECOGNIZER_ENGINE")) {
@@ -221,6 +233,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                     intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, opts.getBoolean(key));
                     break;
                 }
+                case "EXTRA_PREFER_OFFLINE": {
+                    intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, opts.getBoolean(key));
+                    break;
+                }
                 case "EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS": {
                     Double extras = opts.getDouble(key);
                     intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, extras.intValue());
@@ -246,6 +262,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
                 }
             }
         }
+        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, getLocale(this.locale));
         speech.startListening(intent);
     }
